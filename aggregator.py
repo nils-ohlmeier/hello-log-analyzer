@@ -3,8 +3,9 @@ import sys
 import json
 import os.path
 
-fileExtension = ".json"
+file_extension = ".json"
 verbose = False
+read_reports_counter = 0
 
 def getCandidates(json):
   ret = []
@@ -44,6 +45,9 @@ def candidateTypeMissing(json, ctype):
   filteredCandidates = filterCandidateType(candidates, ctype)
   return len(filteredCandidates) == 0
 
+def logContains(json, string):
+  return string in json['log']
+
 initial_db = [
       {
        'name': 'No candidates at all',
@@ -68,7 +72,25 @@ initial_db = [
        'function': candidateTypeMissing,
        'argument': 'relayed',
        'matches': []
-      }
+      },
+      {
+       'name': 'Log contains TCP soccket error ". Abandoning."',
+       'function': logContains,
+       'argument': '. Abandoning.',
+       'matches': []
+      },
+      {
+       'name': 'Log contains "failed to create UDP candidates with error 6"',
+       'function': logContains,
+       'argument': 'failed to create UDP candidates with error 6',
+       'matches': []
+      },
+      {
+       'name': 'Log contains "Error in recvfrom: -5961"',
+       'function': logContains,
+       'argument': 'Error in recvfrom: -5961',
+       'matches': []
+      },
       ]
 
 def addLogToDb(filename, json, db):
@@ -77,15 +99,20 @@ def addLogToDb(filename, json, db):
       entry['matches'].append(filename)
 
 def loadJsonFile(filename, db):
+  global read_reports_counter
   dirname = os.path.dirname(filename)
   source = open(filename, 'r')
   parsed = json.loads(source.read())
   addLogToDb(filename, parsed, db)
+  read_reports_counter+=1
   source.close()
 
 def dumpDb(db):
+  print "Analyzed %d reports" % read_reports_counter
   for entry in db:
-    print '%d: %s' % (len(entry['matches']), entry['name'])
+    count = len(entry['matches'])
+    percent = count / float(read_reports_counter) * 100
+    print '%d (%04.1f%%):\t%s' % (count, percent, entry['name'])
     if verbose:
       for match in entry['matches']:
         print '\t%s' % match
@@ -100,7 +127,7 @@ def main():
     for dirName, subdirList, fileList in os.walk(d):
       #print('directory %s' % dirName)
       for fname in fileList:
-        if fname.endswith(fileExtension):
+        if fname.endswith(file_extension):
           fullname = os.path.join(dirName, fname)
           #print('\t%s' % fullname)
           loadJsonFile(fullname, initial_db)
