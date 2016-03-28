@@ -52,6 +52,12 @@ def sdpEmpty(json, sdp):
 def logContains(json, string):
   return string in json['log']
 
+def logContainsAll(json, strlist):
+  ret = True
+  for string in strlist:
+    ret = ret & logContains(json, string)
+  return ret
+
 initial_db = [
       {
         'name': 'Log contains "failed to create UDP candidates with error 6"',
@@ -110,6 +116,13 @@ initial_db = [
         'matches': []
       },
       {
+        'name': 'Log contains success and failure',
+        'function': logContainsAll,
+        'argument': ['all checks completed success=1 fail=0', 'all checks completed success=0 fail=1'],
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
         'name': 'Log contains TCP soccket error ". Abandoning."',
         'function': logContains,
         'argument': '. Abandoning.',
@@ -127,7 +140,7 @@ initial_db = [
         'name': 'Unknow',
         'function': None,
         'argument': None,
-        'stopProcessing': False,
+        'stopProcessing': True,
         'matches': []
       },
       ]
@@ -179,6 +192,8 @@ def displayDb(db):
     msg = '%d (%04.1f%%):\t' % (count, percent)
     if category['stopProcessing']:
       msg += '* '
+    else:
+      msg += '  '
     msg += '%s' % (category['name'])
     if category.has_key('minversion'):
       msg += ' [%d - %d]' % (category['minversion'], category['maxversion'])
