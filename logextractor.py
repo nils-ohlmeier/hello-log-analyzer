@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import sys
 import json
-import os.path
-
 
 def extractLog(filename):
   print filename
@@ -15,7 +13,6 @@ def extractLog(filename):
   dst.write(foldedlog)
   dst.close()
   source.close()
-
 
 if len(sys.argv) == 1:
   print "Missing input file name"
