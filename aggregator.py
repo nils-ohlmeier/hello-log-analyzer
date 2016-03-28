@@ -54,70 +54,93 @@ def logContains(json, string):
 
 initial_db = [
       {
-       'name': 'No candidates at all',
-       'function': localAndRemoteCandidatesMissing,
-       'argument': None,
-       'matches': []
+        'name': 'Log contains "failed to create UDP candidates with error 6"',
+        'function': logContains,
+        'argument': 'failed to create UDP candidates with error 6',
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Remote candidates missing',
-       'function': remoteCandidatesMissing,
-       'argument': None,
-       'matches': []
+        'name': 'Local SDP missing',
+        'function': sdpEmpty,
+        'argument': 'localSdp',
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Serverreflexive candidates missing',
-       'function': candidateTypeMissing,
-       'argument': 'serverreflexive',
-       'matches': []
+        'name': 'Remote SDP missing',
+        'function': sdpEmpty,
+        'argument': 'remoteSdp',
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Relay candidates missing',
-       'function': candidateTypeMissing,
-       'argument': 'relayed',
-       'matches': []
+        'name': 'No candidates at all',
+        'function': localAndRemoteCandidatesMissing,
+        'argument': None,
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Local SDP missing',
-       'function': sdpEmpty,
-       'argument': 'localSdp',
-       'matches': []
+        'name': 'Remote candidates missing',
+        'function': remoteCandidatesMissing,
+        'argument': None,
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Remote SDP missing',
-       'function': sdpEmpty,
-       'argument': 'remoteSdp',
-       'matches': []
+        'name': 'Serverreflexive candidates missing',
+        'function': candidateTypeMissing,
+        'argument': 'serverreflexive',
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Log contains TCP soccket error ". Abandoning."',
-       'function': logContains,
-       'argument': '. Abandoning.',
-       'matches': []
+        'name': 'Relay candidates missing',
+        'function': candidateTypeMissing,
+        'argument': 'relayed',
+        'stopProcessing': True,
+        'matches': []
       },
       {
-       'name': 'Log contains "failed to create UDP candidates with error 6"',
-       'function': logContains,
-       'argument': 'failed to create UDP candidates with error 6',
-       'matches': []
+        'name': 'Log contains TCP soccket error ". Abandoning."',
+        'function': logContains,
+        'argument': '. Abandoning.',
+        'stopProcessing': False,
+        'matches': []
       },
       {
-       'name': 'Log contains "Error in recvfrom: -5961"',
-       'function': logContains,
-       'argument': 'Error in recvfrom: -5961',
-       'matches': []
+        'name': 'Log contains "Error in recvfrom: -5961"',
+        'function': logContains,
+        'argument': 'Error in recvfrom: -5961',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
+        'name': 'Unknow',
+        'function': None,
+        'argument': None,
+        'stopProcessing': False,
+        'matches': []
       },
       ]
 
 def addLogToDb(filename, json, db):
-  for entry in db:
-    if entry['function'](json, entry['argument']):
+  for category in db:
+    if (not category['function']) or (category['function'](json, category['argument'])):
       newentry = {}
       newentry['filename'] = filename
       newentry['channel'] = json['info']['appUpdateChannel']
       newentry['version'] = json['info']['appVersion']
       newentry['os'] = json['info']['OS']
-      entry['matches'].append(newentry)
+      category['matches'].append(newentry)
+      majorversion = int(newentry['version'].split('.')[0])
+      if (not category.has_key('minversion')) or (category['minversion'] > majorversion):
+        category['minversion'] = majorversion
+      if (not category.has_key('maxversion')) or (category['maxversion'] < majorversion):
+        category['maxversion'] = majorversion
+      if category['stopProcessing']:
+        return
 
 def loadJsonFile(filename, db):
   global read_reports_counter
@@ -129,11 +152,13 @@ def loadJsonFile(filename, db):
   source.close()
 
 def writeReport(db):
-  for entry in db:
-    if entry.has_key('argument'):
-      del entry['argument']
-    if entry.has_key('function'):
-      del entry['function']
+  for category in db:
+    if category.has_key('argument'):
+      del category['argument']
+    if category.has_key('function'):
+      del category['function']
+    if category.has_key('stopProcessing'):
+      del category['stopProcessing']
   jdb = json.dumps(db)
   report = open(report_file, 'w')
   report.write(jdb)
@@ -141,12 +166,18 @@ def writeReport(db):
 
 def displayDb(db):
   print "Analyzed %d reports" % read_reports_counter
-  for entry in db:
-    count = len(entry['matches'])
+  for category in db:
+    count = len(category['matches'])
     percent = count / float(read_reports_counter) * 100
-    print '%d (%04.1f%%):\t%s' % (count, percent, entry['name'])
+    msg = '%d (%04.1f%%):\t' % (count, percent)
+    if category['stopProcessing']:
+      msg += '* '
+    msg += '%s' % (category['name'])
+    if category.has_key('minversion'):
+      msg += ' [%d - %d]' % (category['minversion'], category['maxversion'])
+    print msg
     if verbose:
-      for match in entry['matches']:
+      for match in category['matches']:
         print '\t%s' % match
 
 def main():
