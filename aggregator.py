@@ -89,6 +89,13 @@ initial_db = [
         'matches': []
       },
       {
+        'name': 'Log contains late trickle error "tried to trickle ICE in inappropriate state FAILED"',
+        'function': logContains,
+        'argument': 'tried to trickle ICE in inappropriate state 5',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
         'name': 'Serverreflexive candidates missing',
         'function': candidateTypeMissing,
         'argument': 'serverreflexive',
@@ -194,8 +201,8 @@ def main():
           fullname = os.path.join(dirName, fname)
           #print('\t%s' % fullname)
           loadJsonFile(fullname, initial_db)
-  writeReport(initial_db)
   displayDb(initial_db)
+  writeReport(initial_db)
 
 if __name__ == "__main__":
   main()
