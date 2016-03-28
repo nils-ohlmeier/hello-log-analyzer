@@ -46,6 +46,9 @@ def candidateTypeMissing(json, ctype):
   filteredCandidates = filterCandidateType(candidates, ctype)
   return len(filteredCandidates) == 0
 
+def sdpEmpty(json, sdp):
+  return len(json[sdp]) == 0
+
 def logContains(json, string):
   return string in json['log']
 
@@ -72,6 +75,12 @@ initial_db = [
        'name': 'Relay candidates missing',
        'function': candidateTypeMissing,
        'argument': 'relayed',
+       'matches': []
+      },
+      {
+       'name': 'Remote SDP missing',
+       'function': sdpEmpty,
+       'argument': 'remoteSdp',
        'matches': []
       },
       {
