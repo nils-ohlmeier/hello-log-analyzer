@@ -6,6 +6,7 @@ import os.path
 file_extension = ".json"
 verbose = False
 read_reports_counter = 0
+report_file = "report.json"
 
 def getCandidates(json):
   ret = []
@@ -96,7 +97,12 @@ initial_db = [
 def addLogToDb(filename, json, db):
   for entry in db:
     if entry['function'](json, entry['argument']):
-      entry['matches'].append(filename)
+      newentry = {}
+      newentry['filename'] = filename
+      newentry['channel'] = json['info']['appUpdateChannel']
+      newentry['version'] = json['info']['appVersion']
+      newentry['os'] = json['info']['OS']
+      entry['matches'].append(newentry)
 
 def loadJsonFile(filename, db):
   global read_reports_counter
@@ -107,7 +113,18 @@ def loadJsonFile(filename, db):
   read_reports_counter+=1
   source.close()
 
-def dumpDb(db):
+def writeReport(db):
+  for entry in db:
+    if entry.has_key('argument'):
+      del entry['argument']
+    if entry.has_key('function'):
+      del entry['function']
+  jdb = json.dumps(db)
+  report = open(report_file, 'w')
+  report.write(jdb)
+  report.close()
+
+def displayDb(db):
   print "Analyzed %d reports" % read_reports_counter
   for entry in db:
     count = len(entry['matches'])
@@ -131,7 +148,8 @@ def main():
           fullname = os.path.join(dirName, fname)
           #print('\t%s' % fullname)
           loadJsonFile(fullname, initial_db)
-  dumpDb(initial_db)
+  writeReport(initial_db)
+  displayDb(initial_db)
 
 if __name__ == "__main__":
   main()
