@@ -78,6 +78,12 @@ initial_db = [
        'matches': []
       },
       {
+       'name': 'Local SDP missing',
+       'function': sdpEmpty,
+       'argument': 'localSdp',
+       'matches': []
+      },
+      {
        'name': 'Remote SDP missing',
        'function': sdpEmpty,
        'argument': 'remoteSdp',
