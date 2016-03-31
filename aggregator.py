@@ -130,6 +130,20 @@ initial_db = [
         'matches': []
       },
       {
+        'name': 'Log contains "nr_turn_allocated_cb called with state FAILED"',
+        'function': logContains,
+        'argument': 'nr_turn_allocated_cb called with state 4',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
+        'name': 'Log contains "nr_socket_proxy_tunnel_read unable to connect 407"',
+        'function': logContains,
+        'argument': 'nr_socket_proxy_tunnel_read unable to connect 407',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
         'name': 'Log contains "Error in recvfrom: -5961"',
         'function': logContains,
         'argument': 'Error in recvfrom: -5961',
@@ -181,6 +195,7 @@ def writeReport(db):
       del category['stopProcessing']
   jdb = json.dumps(db)
   report = open(report_file, 'w')
+  report.write('var firefox_hello_ice_reports = ')
   report.write(jdb)
   report.close()
 
