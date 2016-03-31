@@ -58,7 +58,7 @@ def logContainsAll(json, strlist):
     ret = ret & logContains(json, string)
   return ret
 
-initial_db = [
+known_error_db = [
       {
         'name': 'Log contains "failed to create UDP candidates with error 6"',
         'function': logContains,
@@ -95,13 +95,6 @@ initial_db = [
         'matches': []
       },
       {
-        'name': 'Log contains late trickle error "tried to trickle ICE in inappropriate state FAILED"',
-        'function': logContains,
-        'argument': 'tried to trickle ICE in inappropriate state 5',
-        'stopProcessing': False,
-        'matches': []
-      },
-      {
         'name': 'Serverreflexive candidates missing',
         'function': candidateTypeMissing,
         'argument': 'serverreflexive',
@@ -113,6 +106,22 @@ initial_db = [
         'function': candidateTypeMissing,
         'argument': 'relayed',
         'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Unknow',
+        'function': None,
+        'argument': None,
+        'stopProcessing': False,
+        'matches': []
+      },
+      ]
+unknown_error_db = [
+      {
+        'name': 'Log contains late trickle error "tried to trickle ICE in inappropriate state FAILED"',
+        'function': logContains,
+        'argument': 'tried to trickle ICE in inappropriate state 5',
+        'stopProcessing': False,
         'matches': []
       },
       {
@@ -150,13 +159,6 @@ initial_db = [
         'stopProcessing': False,
         'matches': []
       },
-      {
-        'name': 'Unknow',
-        'function': None,
-        'argument': None,
-        'stopProcessing': True,
-        'matches': []
-      },
       ]
 
 def addLogToDb(filename, json, db):
@@ -174,18 +176,20 @@ def addLogToDb(filename, json, db):
       if (not category.has_key('maxversion')) or (category['maxversion'] < majorversion):
         category['maxversion'] = majorversion
       if category['stopProcessing']:
-        return
+        return True
+  return False
 
-def loadJsonFile(filename, db):
+def loadJsonFile(filename, known_db, unknown_db):
   global read_reports_counter
   dirname = os.path.dirname(filename)
   source = open(filename, 'r')
   parsed = json.loads(source.read())
-  addLogToDb(filename, parsed, db)
-  read_reports_counter+=1
   source.close()
+  if not addLogToDb(filename, parsed, known_db):
+    addLogToDb(filename, parsed, unknown_db)
+  read_reports_counter+=1
 
-def writeReport(db):
+def cleanDb(db):
   for category in db:
     if category.has_key('argument'):
       del category['argument']
@@ -193,22 +197,26 @@ def writeReport(db):
       del category['function']
     if category.has_key('stopProcessing'):
       del category['stopProcessing']
+
+def writeReport(fd, db):
+  cleanDb(db)
   jdb = json.dumps(db)
+  fd.write(jdb)
+  fd.write('\n')
+
+def writeReports(known, unknown):
   report = open(report_file, 'w')
-  report.write('var firefox_hello_ice_reports = ')
-  report.write(jdb)
+  report.write('var firefox_hello_known_ice_errors = ')
+  writeReport(report, known)
+  report.write('var firefox_hello_unknown_ice_errors = ')
+  writeReport(report, unknown)
   report.close()
 
 def displayDb(db):
-  print "Analyzed %d reports" % read_reports_counter
   for category in db:
     count = len(category['matches'])
     percent = count / float(read_reports_counter) * 100
-    msg = '%d (%04.1f%%):\t' % (count, percent)
-    if category['stopProcessing']:
-      msg += '* '
-    else:
-      msg += '  '
+    msg = '  %d (%04.1f%%):\t' % (count, percent)
     msg += '%s' % (category['name'])
     if category.has_key('minversion'):
       msg += ' [%d - %d]' % (category['minversion'], category['maxversion'])
@@ -216,6 +224,13 @@ def displayDb(db):
     if verbose:
       for match in category['matches']:
         print '\t%s' % match
+
+def displayDbs(known, unknown):
+  print "Analyzed %d reports" % read_reports_counter
+  print "Known problems:"
+  displayDb(known)
+  print "Indicators for unknown problems:"
+  displayDb(unknown)
 
 def main():
   if len(sys.argv) == 1:
@@ -230,9 +245,9 @@ def main():
         if fname.endswith(file_extension):
           fullname = os.path.join(dirName, fname)
           #print('\t%s' % fullname)
-          loadJsonFile(fullname, initial_db)
-  displayDb(initial_db)
-  writeReport(initial_db)
+          loadJsonFile(fullname, known_error_db, unknown_error_db)
+  displayDbs(known_error_db, unknown_error_db)
+  writeReports(known_error_db, unknown_error_db)
 
 if __name__ == "__main__":
   main()
