@@ -67,6 +67,62 @@ known_error_db = [
         'matches': []
       },
       {
+        'name': 'Log contains GetAdaptersInfo failure "Got error from GetAdaptersInfo"',
+        'function': logContains,
+        'argument': 'Got error from GetAdaptersInfo',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains GetAdaptersInfo failure "Error getting buf len from GetAdaptersAddresses()"',
+        'function': logContains,
+        'argument': 'Error getting buf len from GetAdaptersAddresses()',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains GetAdaptersInfo failure "Error getting addresses from GetAdaptersAddresses()"',
+        'function': logContains,
+        'argument': 'Error getting addresses from GetAdaptersAddresses()',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains find local addresses failure "unable to find local addresses"',
+        'function': logContains,
+        'argument': 'unable to find local addresses',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains error opening registry "Got error 2 opening adapter reg key"',
+        'function': logContains,
+        'argument': 'Got error 2 opening adapter reg key',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains STS failure "Couldn\'t attach socket to STS"',
+        'function': logContains,
+        'argument': 'Couldn\'t attach socket to STS',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains candidate creation failure "couldn\'t create any valid candidates"',
+        'function': logContains,
+        'argument': 'couldn\'t create any valid candidates',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
+        'name': 'Log contains HTTP Proxy DNS resolution error "Could not invoke DNS resolver"',
+        'function': logContains,
+        'argument': 'Could not invoke DNS resolver',
+        'stopProcessing': True,
+        'matches': []
+      },
+      {
         'name': 'Local SDP missing',
         'function': sdpEmpty,
         'argument': 'localSdp',
@@ -109,7 +165,7 @@ known_error_db = [
         'matches': []
       },
       {
-        'name': 'Unknow',
+        'name': 'Uncategorized',
         'function': None,
         'argument': None,
         'stopProcessing': False,
@@ -208,7 +264,7 @@ def writeReports(known, unknown):
   report = open(report_file, 'w')
   report.write('var firefox_hello_known_ice_errors = ')
   writeReport(report, known)
-  report.write('var firefox_hello_unknown_ice_errors = ')
+  report.write('var firefox_hello_uncategorized_ice_errors = ')
   writeReport(report, unknown)
   report.close()
 
@@ -229,7 +285,7 @@ def displayDbs(known, unknown):
   print "Analyzed %d reports" % read_reports_counter
   print "Known problems:"
   displayDb(known)
-  print "Indicators for unknown problems:"
+  print "Indicators for uncategorized problems:"
   displayDb(unknown)
 
 def main():

@@ -35,7 +35,7 @@
           errcategories.push([item.name, stat.counter]);
         }
       });
-      firefox_hello_unknown_ice_errors.forEach(function (item, index, array) {
+      firefox_hello_uncategorized_ice_errors.forEach(function (item, index, array) {
         var stat = {'name': item.name,
                     'channel': {},
                     'os': {},
@@ -126,7 +126,7 @@
                      document.getElementById('known_errors'),
                      0);
         drawColumnChart(errhints,
-                        'ICE log hints for unknown errors',
+                        'ICE log hints for uncategorized errors',
                          document.getElementById('error_hints'),
                          0);
         stats.forEach(function (stat, index, array) {
