@@ -9,10 +9,11 @@
       }
 
       var errcategories = [];
+      var errhints = [];
       var stats = [];
       var minversion = get('minversion') || 33;
-      var maxversion = get('maxversion') || 47;
-      firefox_hello_ice_reports.forEach(function (item, index, array) {
+      var maxversion = get('maxversion') || 100;
+      firefox_hello_known_ice_errors.forEach(function (item, index, array) {
         var stat = {'name': item.name,
                     'channel': {},
                     'os': {},
@@ -34,64 +35,116 @@
           errcategories.push([item.name, stat.counter]);
         }
       });
+      firefox_hello_unknown_ice_errors.forEach(function (item, index, array) {
+        var stat = {'name': item.name,
+                    'channel': {},
+                    'os': {},
+                    'version': {},
+                    'matches': [],
+                    'counter': 0}
+        item.matches.forEach(function (match, index, array) {
+          var version = match.version.split('.')[0];
+          if ((version >= minversion) & (version <= maxversion)) {
+            typeof stat.version[version] !== 'undefined' ?  stat.version[version] += 1 : stat.version[version] = 1;
+            typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
+            typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
+            stat.counter += 1;
+            stat.matches.push(match.filename)
+          }
+        });
+        stats.push(stat);
+        if (stat.counter > 0) {
+          errhints.push([item.name, stat.counter]);
+        }
+      });
       console.log(stats);
 
       google.charts.load('current', {'packages':['corechart']});
       google.charts.setOnLoadCallback(drawCharts);
 
-      function createNewDiv() {
+      function createNewContainer(title) {
         var d = document.createElement('div');
-        d.style.width = '500px';
-        d.style.height = '300px';
         document.body.appendChild(d);
         return d;
       }
 
-      function createNewHeading(title) {
+      function addNewHeading(elem, title) {
+        var d = document.createElement('div');
+        elem.appendChild(d);
         var h = document.createElement('h3');
         h.textContent = title;
-        document.body.appendChild(h);
+        d.appendChild(h);
       }
 
-      function appendLogTable(files) {
-        var d = document.createElement('div');
-        document.body.appendChild(d);
+      function addLogTable(elem, files) {
         files.forEach(function (f, index, array) {
           var anchor = document.createElement('a');
           anchor.textContent = f;
           anchor.setAttribute('href', f);
-          d.appendChild(anchor);
+          elem.appendChild(anchor);
         });
       }
 
-      function drawPieChart(data, name, elem) {
+      function createNewDiv(elem, display, width, height) {
+        var d = document.createElement('div');
+        if (display) {
+          d.style.display = display;
+        }
+        if (width) {
+          d.style.width = '500px';
+          d.style.height = '300px';
+        }
+        elem.appendChild(d);
+        return d;
+      }
+
+      function drawPieChart(data, name, elem, parent) {
         var data = google.visualization.arrayToDataTable(data, true);
         var options = { title: name };
-        var chart = new google.visualization.PieChart(elem || createNewDiv());
+        var target = elem;
+        if (parent === 1) {
+          target = createNewDiv(elem, null, 500, 300);
+        }
+        var chart = new google.visualization.PieChart(target);
         chart.draw(data, options);
       }
 
-      function drawColumnChart(data, name) {
+      function drawColumnChart(data, name, elem, parent) {
         var data = google.visualization.arrayToDataTable(data, true);
         var options = { title: name , legend: { position: 'none'}};
-        var chart = new google.visualization.ColumnChart(createNewDiv());
+        var target = elem;
+        if (parent === 1) {
+          target = createNewDiv(elem, null, 500, 300);
+        }
+        var chart = new google.visualization.ColumnChart(target);
         chart.draw(data, options);
       }
 
       function drawCharts() {
         drawPieChart(errcategories,
                      'ICE error log categories',
-                     document.getElementById('logcategories'));
+                     document.getElementById('known_errors'),
+                     0);
+        drawColumnChart(errhints,
+                        'ICE log hints for unknown errors',
+                         document.getElementById('error_hints'),
+                         0);
         stats.forEach(function (stat, index, array) {
           if (stat.counter > 0) {
-            createNewHeading(stat['name']);
+            var d = createNewDiv(document.body);
+            addNewHeading(d, stat['name']);
+            var d2 = createNewDiv(d, 'flex');
             drawColumnChart(Object.entries(stat['version']),
-                            'Versions (' + stat['name'] + ')');
+                            'Versions (' + stat['name'] + ')',
+                            d2, 1);
             drawPieChart(Object.entries(stat['channel']),
-                         'Channel (' + stat['name'] + ')');
+                         'Channel (' + stat['name'] + ')',
+                         d2, 1);
             drawPieChart(Object.entries(stat['os']),
-                         'OS (' + stat['name'] + ')');
-            appendLogTable(stat['matches']);
+                         'OS (' + stat['name'] + ')',
+                         d2, 1);
+            var d3 = createNewDiv(d);
+            addLogTable(d3, stat['matches']);
           }
         });
 
@@ -101,6 +154,9 @@
   </head>
   <body>
     <h2>Firefox Hello ICE error logs</h2>
-    <div id="logcategories" style="width: 900px; height: 500px;"></div>
+    <div id="overview" style="display: flex; width: 100%; height: 500 px;">
+      <div id="known_errors" style="width: 50%; height: 500px;"></div>
+      <div id="error_hints" style="width: 50%; height: 500px;"></div>
+    </div>
   </body>
 </html>
