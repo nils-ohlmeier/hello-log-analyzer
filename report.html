@@ -1,0 +1,106 @@
+<html>
+  <head>
+    <script src="report.json"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      function get(name){
+        if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+          return decodeURIComponent(name[1]);
+      }
+
+      var errcategories = [];
+      var stats = [];
+      var minversion = get('minversion') || 33;
+      var maxversion = get('maxversion') || 47;
+      firefox_hello_ice_reports.forEach(function (item, index, array) {
+        var stat = {'name': item.name,
+                    'channel': {},
+                    'os': {},
+                    'version': {},
+                    'matches': [],
+                    'counter': 0}
+        item.matches.forEach(function (match, index, array) {
+          var version = match.version.split('.')[0];
+          if ((version >= minversion) & (version <= maxversion)) {
+            typeof stat.version[version] !== 'undefined' ?  stat.version[version] += 1 : stat.version[version] = 1;
+            typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
+            typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
+            stat.counter += 1;
+            stat.matches.push(match.filename)
+          }
+        });
+        stats.push(stat);
+        if (stat.counter > 0) {
+          errcategories.push([item.name, stat.counter]);
+        }
+      });
+      console.log(stats);
+
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawCharts);
+
+      function createNewDiv() {
+        var d = document.createElement('div');
+        d.style.width = '500px';
+        d.style.height = '300px';
+        document.body.appendChild(d);
+        return d;
+      }
+
+      function createNewHeading(title) {
+        var h = document.createElement('h3');
+        h.textContent = title;
+        document.body.appendChild(h);
+      }
+
+      function appendLogTable(files) {
+        var d = document.createElement('div');
+        document.body.appendChild(d);
+        files.forEach(function (f, index, array) {
+          var anchor = document.createElement('a');
+          anchor.textContent = f;
+          anchor.setAttribute('href', f);
+          d.appendChild(anchor);
+        });
+      }
+
+      function drawPieChart(data, name, elem) {
+        var data = google.visualization.arrayToDataTable(data, true);
+        var options = { title: name };
+        var chart = new google.visualization.PieChart(elem || createNewDiv());
+        chart.draw(data, options);
+      }
+
+      function drawColumnChart(data, name) {
+        var data = google.visualization.arrayToDataTable(data, true);
+        var options = { title: name , legend: { position: 'none'}};
+        var chart = new google.visualization.ColumnChart(createNewDiv());
+        chart.draw(data, options);
+      }
+
+      function drawCharts() {
+        drawPieChart(errcategories,
+                     'ICE error log categories',
+                     document.getElementById('logcategories'));
+        stats.forEach(function (stat, index, array) {
+          if (stat.counter > 0) {
+            createNewHeading(stat['name']);
+            drawColumnChart(Object.entries(stat['version']),
+                            'Versions (' + stat['name'] + ')');
+            drawPieChart(Object.entries(stat['channel']),
+                         'Channel (' + stat['name'] + ')');
+            drawPieChart(Object.entries(stat['os']),
+                         'OS (' + stat['name'] + ')');
+            appendLogTable(stat['matches']);
+          }
+        });
+
+      }
+    </script>
+
+  </head>
+  <body>
+    <h2>Firefox Hello ICE error logs</h2>
+    <div id="logcategories" style="width: 900px; height: 500px;"></div>
+  </body>
+</html>
