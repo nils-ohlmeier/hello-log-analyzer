@@ -10,6 +10,7 @@
 
       var errcategories = [];
       var errhints = [];
+      var releaseerr = {};
       var stats = [];
       var global_counter = 0;
       var minversion = get('minversion') || 33;
@@ -28,6 +29,9 @@
             typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
             typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
             stat.counter += 1;
+            if (match.channel === "release") {
+              typeof releaseerr[version] !== 'undefined' ?  releaseerr[version] += 1 : releaseerr[version] = 1;
+            }
             stat.matches.push(match.filename)
           }
         });
@@ -139,6 +143,10 @@
       function drawCharts() {
         var cdiv = document.getElementById('global_counters');
         cdiv.textContent = "Analyzed " + global_counter + " reports between Firefox version " + minversion + " and version " + maxversion;
+        drawColumnChart(Object.entries(releaseerr),
+                        'Error reports per version on release channel',
+                        document.getElementById('trend'),
+                        0);
         drawPieChart(errcategories,
                      'ICE error log categories',
                      document.getElementById('known_errors'),
@@ -173,6 +181,7 @@
   <body>
     <h2>Firefox Hello ICE error logs</h2>
     <div id="global_counters"></div>
+    <div id="trend"></div>
     <div id="overview" style="display: flex; width: 100%; height: 500 px;">
       <div id="known_errors" style="width: 50%; height: 500px;"></div>
       <div id="error_hints" style="width: 50%; height: 500px;"></div>
