@@ -1,6 +1,6 @@
 <html>
   <head>
-    <script src="report.json"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/telemetry-public-analysis-2/hello-ice-log-analyzer/data/report.json"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
       function get(name){
@@ -15,6 +15,7 @@
       var global_counter = 0;
       var minversion = get('minversion') || 33;
       var maxversion = get('maxversion') || 100;
+      var showlogs = get('showlogs') || 0;
       firefox_hello_known_ice_errors.forEach(function (item, index, array) {
         var stat = {'name': item.name,
                     'channel': {},
@@ -169,8 +170,10 @@
             drawPieChart(Object.entries(stat['os']),
                          'OS (' + stat['name'] + ')',
                          d2, 1);
-            var d3 = createNewDiv(d);
-            addLogTable(d3, stat['matches']);
+            if (showlogs !== '0') {
+              var d3 = createNewDiv(d);
+              addLogTable(d3, stat['matches']);
+            }
           }
         });
 
