@@ -2,6 +2,7 @@
 import sys
 import json
 import os.path
+from datetime import datetime
 
 file_extension = ".json"
 verbose = False
@@ -260,13 +261,24 @@ def writeReport(fd, db):
   fd.write(jdb)
   fd.write('\n')
 
+def createReport(known, unknown):
+  report = {'stats': {}}
+  report['stats']['date_created'] = datetime.now().isoformat()
+  report['stats']['total_number_of_reports'] = read_reports_counter
+  cleanDb(known)
+  report['known_ice_errors'] = known
+  cleanDb(unknown)
+  report['uncategorized_ice_errors'] = unknown
+  return report
+
 def writeReports(known, unknown):
-  report = open(report_file, 'w')
-  report.write('var firefox_hello_known_ice_errors = ')
-  writeReport(report, known)
-  report.write('var firefox_hello_uncategorized_ice_errors = ')
-  writeReport(report, unknown)
-  report.close()
+  report = createReport(known, unknown)
+  rfile = open(report_file, 'w')
+  rfile.write('var firefox_hello_ice_reports = ')
+  j = json.dumps(report)
+  rfile.write(j)
+  rfile.write('\n')
+  rfile.close()
 
 def displayDb(db):
   for category in db:

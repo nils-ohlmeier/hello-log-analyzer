@@ -1,6 +1,9 @@
 <html>
   <head>
     <script src="https://s3-us-west-2.amazonaws.com/telemetry-public-analysis-2/hello-ice-log-analyzer/data/report.json"></script>
+    <!--
+    <script src="report.json"></script>
+    -->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
       function get(name){
@@ -16,7 +19,7 @@
       var minversion = get('minversion') || 33;
       var maxversion = get('maxversion') || 100;
       var showlogs = get('showlogs') || 0;
-      firefox_hello_known_ice_errors.forEach(function (item, index, array) {
+      firefox_hello_ice_reports.known_ice_errors.forEach(function (item, index, array) {
         var stat = {'name': item.name,
                     'channel': {},
                     'os': {},
@@ -42,7 +45,7 @@
           global_counter += stat.counter;
         }
       });
-      firefox_hello_uncategorized_ice_errors.forEach(function (item, index, array) {
+      firefox_hello_ice_reports.uncategorized_ice_errors.forEach(function (item, index, array) {
         var stat = {'name': item.name,
                     'channel': {},
                     'os': {},
@@ -143,7 +146,7 @@
 
       function drawCharts() {
         var cdiv = document.getElementById('global_counters');
-        cdiv.textContent = "Analyzed " + global_counter + " reports between Firefox version " + minversion + " and version " + maxversion;
+        cdiv.textContent = "Analyzed " + global_counter + " reports between Firefox version " + minversion + " and version " + maxversion + " from input data generated on " + firefox_hello_ice_reports.stats.date_created;
         drawColumnChart(Object.entries(releaseerr),
                         'Error reports per version on release channel',
                         document.getElementById('trend'),
