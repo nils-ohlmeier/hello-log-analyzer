@@ -19,6 +19,7 @@
       var minversion = get('minversion') || 33;
       var maxversion = get('maxversion') || 100;
       var showlogs = get('showlogs') || 0;
+      var channel = get('channel') || '';
       firefox_hello_ice_reports.known_ice_errors.forEach(function (item, index, array) {
         var stat = {'name': item.name,
                     'channel': {},
@@ -28,16 +29,18 @@
                     'counter': 0}
         item.matches.forEach(function (match, index, array) {
           var version = match.version.split('.')[0];
-          if ((version >= minversion) & (version <= maxversion)) {
-            typeof stat.version[version] !== 'undefined' ?  stat.version[version] += 1 : stat.version[version] = 1;
-            typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
-            typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
-            stat.counter += 1;
-            if (match.channel === "release") {
-              typeof releaseerr[version] !== 'undefined' ?  releaseerr[version] += 1 : releaseerr[version] = 1;
-            }
-            stat.matches.push(match.filename)
+          if (channel && (channel !== match.channel))
+            return;
+          if ((version < minversion) || (version > maxversion))
+            return;
+          typeof stat.version[version] !== 'undefined' ?  stat.version[version] += 1 : stat.version[version] = 1;
+          typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
+          typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
+          stat.counter += 1;
+          if (match.channel === "release") {
+            typeof releaseerr[version] !== 'undefined' ?  releaseerr[version] += 1 : releaseerr[version] = 1;
           }
+          stat.matches.push(match.filename)
         });
         stats.push(stat);
         if (stat.counter > 0) {
@@ -54,13 +57,15 @@
                     'counter': 0}
         item.matches.forEach(function (match, index, array) {
           var version = match.version.split('.')[0];
-          if ((version >= minversion) & (version <= maxversion)) {
-            typeof stat.version[version] !== 'undefined' ?  stat.version[version] += 1 : stat.version[version] = 1;
-            typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
-            typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
-            stat.counter += 1;
-            stat.matches.push(match.filename)
-          }
+          if (channel && (channel !== match.channel))
+            return;
+          if ((version < minversion) || (version > maxversion))
+            return;
+          typeof stat.version[version] !== 'undefined' ?  stat.version[version] += 1 : stat.version[version] = 1;
+          typeof stat.channel[match.channel] !== 'undefined' ? stat.channel[match.channel] += 1 : stat.channel[match.channel] = 1;
+          typeof stat.os[match.os] !== 'undefined' ?  stat.os[match.os] += 1 : stat.os[match.os] = 1;
+          stat.counter += 1;
+          stat.matches.push(match.filename)
         });
         stats.push(stat);
         if (stat.counter > 0) {
