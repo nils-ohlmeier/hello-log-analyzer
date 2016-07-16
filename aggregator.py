@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import json
+import re
 import os.path
 from datetime import datetime
 
@@ -50,8 +51,14 @@ def candidateTypeMissing(json, ctype):
 def sdpEmpty(json, sdp):
   return len(json[sdp]) == 0
 
+def remoteSdpContains(json, string):
+  return string in json['remoteSdp']
+
 def logContains(json, string):
   return string in json['log']
+
+def logContainsRegexp(json, reg_str):
+  return re.search(reg_str, json['log']) is not None
 
 def logContainsAll(json, strlist):
   ret = True
@@ -213,6 +220,27 @@ unknown_error_db = [
         'name': 'Log contains "Error in recvfrom: -5961"',
         'function': logContains,
         'argument': 'Error in recvfrom: -5961',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
+        'name': 'Log contains "Error in sendto IPv6 UDP -5986"',
+        'function': logContainsRegexp,
+        'argument': 'Error in sendto IP6.*UDP: -5986',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
+        'name': 'Log contains "Error in sendto IPv4 UDP -5986"',
+        'function': logContainsRegexp,
+        'argument': 'Error in sendto IP4.*UDP: -5986',
+        'stopProcessing': False,
+        'matches': []
+      },
+      {
+        'name': 'Remote side is Google Chrome',
+        'function': remoteSdpContains,
+        'argument': 'v=0\r\no=- ',
         'stopProcessing': False,
         'matches': []
       },
